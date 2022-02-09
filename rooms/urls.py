@@ -1,6 +1,6 @@
-from django.urls import path
 from rest_framework.routers import SimpleRouter
-from .api.views import RoomViewSet
+
+from .api import RoomViewSet
 
 router = SimpleRouter()
 

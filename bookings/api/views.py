@@ -30,11 +30,10 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         limit1 = datetime.strptime(data["start_date"], '%Y-%m-%d').date() - timedelta(3)
         limit2 = datetime.strptime(data["end_date"], '%Y-%m-%d').date() - timedelta(3)
-        limit1 = str(limit1)
-        limit2 = str(limit2)
+        limit1, limit2 = str(limit1), str(limit2)
+
         start = Booking.objects.filter(start_date__range=(limit1, data["start_date"]))
 
-        # start = Booking.objects.filter(start_date=data["start_date"])
         end = Booking.objects.filter(end_date__range=(limit2, data["end_date"]))
         print(start, end)
         if start:
