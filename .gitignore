@@ -3,4 +3,4 @@ Pipfile
 Pipfile.lock
 .idea/.gitignore
 .idea/aws.xml
-*.idea
+*.idea/
