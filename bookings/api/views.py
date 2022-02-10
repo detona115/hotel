@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from datetime import timedelta, date, datetime
 from django.core.exceptions import ValidationError, FieldError
@@ -11,13 +11,26 @@ from ..serializers import BookingSerializer
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['start_date', 'end_date']
 
     def create(self, request, *args, **kwargs):
 
         data = request.data
 
-        start_date = datetime.strptime(data["start_date"], '%Y-%m-%d').date()
-        end_date = datetime.strptime(data["end_date"], '%Y-%m-%d').date()
+        try:
+            if not data:
+                return Response(
+                    {"message": "You need to provide data for your reservation!"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            start_date = datetime.strptime(data["start_date"], '%Y-%m-%d').date()
+            end_date = datetime.strptime(data["end_date"], '%Y-%m-%d').date()
+        except TypeError:
+            return Response(
+                    {"message": "The dates provided don't match the expected format!"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
         if start_date <= date.today():
             return Response({"message": "start_date must be greater than the current date."})
@@ -28,13 +41,13 @@ class BookingViewSet(viewsets.ModelViewSet):
         if start_date - date.today() > timedelta(30):
             return Response({"message": "You can't book a room more than 30 days in advance!"})
 
-        limit1 = datetime.strptime(data["start_date"], '%Y-%m-%d').date() - timedelta(3)
-        limit2 = datetime.strptime(data["end_date"], '%Y-%m-%d').date() - timedelta(3)
+        limit1 = datetime.strptime(data["start_date"], '%Y-%m-%d').date() - timedelta(2)
+        limit2 = datetime.strptime(data["end_date"], '%Y-%m-%d').date() - timedelta(2)
         limit1, limit2 = str(limit1), str(limit2)
 
         start = Booking.objects.filter(start_date__range=(limit1, data["start_date"]))
-
         end = Booking.objects.filter(end_date__range=(limit2, data["end_date"]))
+
         print(start, end)
         if start:
             return Response(
@@ -43,7 +56,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             )
         if end:
             return Response(
-                {"message": "The start_date is already booked!"},
+                {"message": "The end_date is already booked!"},
                 status=status.HTTP_403_FORBIDDEN
             )
 
